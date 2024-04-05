@@ -10,7 +10,6 @@
 
 int main()
 {
-
     std::string exe_path = helper::get_exe_path();
     std::string path = exe_path.substr(0, exe_path.find_last_of('/')) + "/data/games.json";
     game::load(path);
@@ -62,15 +61,13 @@ int main()
             {
                 helper::clear();
                 int i = 0;
-                for (auto game: game::games)
-                {
-                    std::cout << i << ") " << game.to_string() << '\n';
-                    i++;
-                }
+                game::print_games();
                 std::cin.ignore();
                 std::cout << "Enter the index of the game you want to remove: ";
                 int index;
                 std::cin >> index;
+
+
                 game::remove_game(game::games[index].game_name);
                 game::save(path);
                 break;
@@ -78,19 +75,30 @@ int main()
             case 3:
             {
                 helper::clear();
-                for (auto game: game::games)
-                {
-                    std::cout << game.to_string() << '\n';
-                }
-                std::cin.ignore();
+                int i = 0;
+                game::print_games();
                 helper::pause();
                 break;
             }
 
             case 4:
+            {
+                helper::clear();
+                std::string game_name;
+                std::cout << "Enter the name of the game you want to search for: ";
+                std::cin >> game_name;
+                game* g = game::search_game(game_name);
+                g ? std::cout << g->to_string() : std::cout << "Game not found" << '\n';
+                helper::pause();
                 break;
+            }
+
             case 5:
+            {
+
                 break;
+            }
+
 
             case 6: return 0;
 

@@ -51,10 +51,38 @@ struct game
         std::erase_if(games, [&](const game& g) { return g.game_name == game_name; });
     }
 
+    static void print_games()
+    {
+        int i = 0;
+        for (const auto& g : games)
+        {
+           std::cout << i << ") " << g.to_string();
+            i++;
+        }
+    }
+
+    static game* search_game(const std::string& game_name)
+    {
+        for (auto& g : games)
+        {
+            if (g.game_name == game_name)
+            {
+                return &g;
+            }
+        }
+        return nullptr;
+    }
+
     std::string to_string() const
     {
-        return "Game: " + game_name + ", Time Played: " + std::to_string(time_played) + ", Score: " + std::to_string(score) + ", Completed: " + (completed ? "completed" : "not completed");
+        std::stringstream ss;
+        ss << std::fixed << std::setprecision(2) << time_played;
+        std::string time_played_str = ss.str();
+
+        return game_name + ", Time Played: " + time_played_str + " hours" + ", Score: " + std::to_string(score) + "/10" + ", " + (completed ? "Completed" : "Not Completed") + '\n';
     }
+
+
 
 
 

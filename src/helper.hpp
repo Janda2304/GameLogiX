@@ -36,6 +36,7 @@ struct helper
         _getch(); // Use _getch() on Windows
 #else
         std::cout << "Press any key to continue...";
+        std::cin.ignore();
         struct termios oldt, newt;
         tcgetattr(STDIN_FILENO, &oldt);
         newt = oldt;
