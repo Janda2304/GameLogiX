@@ -4,7 +4,7 @@ project(GameLogiXpp)
 set(CMAKE_CXX_STANDARD 20)
 
 add_executable(GameLogiX main.cpp
-        src/game.hpp
+        src/game.h
         src/game.cpp
         src/helper.hpp)
 

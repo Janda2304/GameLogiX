@@ -1,7 +1,7 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-#include "src/game.hpp"
+#include "src/game.h"
 #include "src/helper.hpp"
 
 #define RESET   "\033[0m"
@@ -27,7 +27,7 @@ int main()
                 std::cout << "Enter game name: ";
                 std::cout << RED;
                 std::string game_name;
-                std::cin >> game_name;
+                std::getline(std::cin, game_name);
                 std::cout << RESET;
 
                 std::cout << "Enter time played: ";
@@ -95,7 +95,48 @@ int main()
 
             case 5:
             {
+                helper::clear();
+                game::print_games();
+                std::cout << "Enter the index of the game you want to edit: ";
+                int index;
+                std::cin >> index;
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                game g = {};
 
+                std::cout << "Enter new game name: ";
+                std::cout << RED;
+                std::string game_name;
+                std::getline(std::cin, game_name);
+                std::cout << RESET;
+
+                std::cout << "Enter new time played: ";
+                std::cout << RED;
+                float time_played;
+                std::cin >> time_played;
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                std::cout << RESET;
+
+                std::cout << "Enter new score (1-10): ";
+                std::cout << RED;
+                int score;
+                std::cin >> score;
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                std::cout << RESET;
+
+                std::cout << "new completed status: (y/n) ";
+                std::cout << RED;
+                char completed;
+                std::cin >> completed;
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                std::cout << RESET;
+
+                g.completed = completed == 'y';
+                g.game_name = game_name;
+                g.time_played = time_played;
+                g.score = score;
+
+                game::edit_game(index, g);
+                game::save(path);
                 break;
             }
 
