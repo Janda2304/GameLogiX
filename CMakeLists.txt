@@ -6,7 +6,10 @@ set(CMAKE_CXX_STANDARD 20)
 add_executable(GameLogiX main.cpp
         src/game.h
         src/game.cpp
-        src/helper.hpp)
+        imgui/imgui_impl_glfw.cpp
+        imgui/imgui_impl_opengl3.cpp
+        imgui/imgui_util.cpp
+)
 
 find_package(imgui CONFIG REQUIRED)
 target_link_libraries(GameLogiX PRIVATE imgui::imgui)

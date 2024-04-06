@@ -63,6 +63,18 @@ game * game::search_game(const std::string &game_name)
     return nullptr;
 }
 
+int game::search_game_index(const std::string &game_name)
+{
+    for (int i = 0; i < games.size(); i++)
+    {
+        if (games[i].game_name == game_name)
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
 std::string game::to_string() const
 {
     std::stringstream ss;

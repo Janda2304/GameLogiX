@@ -27,6 +27,8 @@ struct game
 
     static game* search_game(const std::string& game_name);
 
+    static int search_game_index(const std::string& game_name);
+
     std::string to_string() const;
 
     static void edit_game(int old_game_index, game new_game);
