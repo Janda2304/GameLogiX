@@ -13,8 +13,6 @@
 #include "imgui/imgui_util.h"
 #include "src/color.hpp"
 
-#define RESET   "\033[0m"
-#define RED     "\033[31m"
 
 ImVec2 main_menu_button_size = ImVec2(400, 50);
 float x_offset;
@@ -29,6 +27,7 @@ ImVec4 clicked_color = color::black(0.75f);
 
 game g = {};
 char game_name[100] = "";
+char game_filter[100] = "";
 game game_to_edit = {};
 
 ImFont* regular_font;
@@ -63,20 +62,18 @@ void init_window(GLFWwindow*& window)
         glfwTerminate();
         return;
     }
-
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
     imgui_init(window);
+
 }
-
-
 
 void imgui_shutdown()
 {
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
     ImGui::PopFont();
+    ImGui::DestroyContext();
 }
 
 void shutdown(GLFWwindow*& window)
@@ -86,6 +83,9 @@ void shutdown(GLFWwindow*& window)
     glfwTerminate();
 }
 
+
+
+
 void render_loop(GLFWwindow* window)
 {
     while (!glfwWindowShouldClose(window))
@@ -94,20 +94,21 @@ void render_loop(GLFWwindow* window)
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
-
         int fb_width, fb_height;
         glfwGetFramebufferSize(window, &fb_width, &fb_height);
 
         int display_w, display_h;
         glfwGetWindowSize(window, &display_w, &display_h);
 
-        ImVec2 win_pos_offset = ImVec2(static_cast<float>(display_w - fb_width) / 2, static_cast<float>(display_h - fb_height));
 
-        ImGui::SetNextWindowPos(win_pos_offset);
-        ImGui::SetNextWindowSize(ImVec2(static_cast<float>(fb_width), static_cast<float>(fb_height)));
+
+        ImGui::SetNextWindowPos(ImVec2(0, 0));
+        ImGui::SetNextWindowSize(ImVec2(display_w, display_h));
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
+
 
         ImGui::Begin(" ", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove);
-
+        ImGui::PopStyleColor();
 
         if (is_main_menu)
         {
@@ -136,9 +137,7 @@ void render_loop(GLFWwindow* window)
                 is_main_menu = false;
                 show_games_menu = true;
             }
-            imgui_util::reset_color();
-            imgui_util::reset_color();
-            imgui_util::reset_color();
+            imgui_util::reset_color(3);
 
             imgui_util::change_button_color(color::persian_red(0.6f));
             imgui_util::change_button_hover_color(color::persian_red(0.3f));
@@ -150,9 +149,7 @@ void render_loop(GLFWwindow* window)
                 shutdown(window);
             }
 
-            imgui_util::reset_color();
-            imgui_util::reset_color();
-            imgui_util::reset_color();
+            imgui_util::reset_color(3);
 
             ImGui::EndListBox();
 
@@ -191,6 +188,10 @@ void render_loop(GLFWwindow* window)
                 game::add_game(g);
                 add_game_menu = false;
                 is_main_menu = true;
+
+                //reset input
+                strcpy(game_name, "");
+                g = {};
             }
             imgui_util::reset_color();
 
@@ -212,6 +213,7 @@ void render_loop(GLFWwindow* window)
             ImGui::PushFont(large_font);
 
             imgui_util::change_frame_background_color(color::transparent());
+
             if (ImGui::BeginListBox("##GAME_LIST", ImVec2(screen_size.x, screen_size.y - 50)))
             {
                 if (imgui_util::back_button("Back", ImVec2(screen_size.x - 20, 50), 5))
@@ -220,17 +222,30 @@ void render_loop(GLFWwindow* window)
                     is_main_menu = true;
                 }
                 imgui_util::reset_color();
+                imgui_util::change_item_width(screen_size.x - 20);
+                imgui_util::change_frame_background_color(0.25f, 0.25f, 0.25f, 0.5f);
+                imgui_util::change_item_rounding(5);
+                ImGui::InputTextWithHint("##SEARCH", "Search", game_filter, IM_ARRAYSIZE(game_filter));
+                ImGui::PopStyleColor();
+                ImGui::PopStyleVar();
 
                 imgui_util::change_item_spacing_y(7);
                 for (const auto& g: game::games)
                 {
+                    std::string g_name_haystack = helper::to_lowercase(g.game_name);
+                    std::string g_name_needle = helper::to_lowercase(game_filter);
+                    std::cout << g_name_haystack << "needle:" << g_name_needle << std::endl;
+                    if (strstr(g_name_haystack.c_str(), g_name_needle.c_str()) == nullptr && strlen(game_filter) > 0)
+                    {
+                        continue;
+                    }
                     std::string label = g.game_name + "##GAME_ENTRY";
                     imgui_util::change_frame_background_color(0.25f, 0.25f, 0.25f, 0.5f);
-                    if (ImGui::BeginListBox(label.c_str(), ImVec2(screen_size.x - 20, 130)))
+                    if(imgui_util::begin_rounded_list_box(label.c_str(), ImVec2(screen_size.x - 20, 130), 5.0f))
                     {
                         float window_width = ImGui::GetWindowSize().x;
                         float button_width = 200.0f;
-                        float padding = 10.0f; // Adjust this value to your liking
+                        float padding = 10.0f;
                         float button_pos_x = window_width - button_width - padding;
 
                         imgui_util::change_text_color(0.023529411764705882f, 0.33725490196078434f, 0.7254901960784313f, 1);
@@ -247,23 +262,22 @@ void render_loop(GLFWwindow* window)
                         }
                         ImGui::Text(g.completed ? "Completed" : "Not Completed");
                         ImGui::SameLine(button_pos_x);
-                        /*if (imgui_util::rounded_button("Edit Game", ImVec2(button_width, 30), 5))
+                        if (imgui_util::rounded_button("Edit Game", ImVec2(button_width, 30), 5))
                         {
                             edit_game_menu = true;
                             show_games_menu = false;
                             game_to_edit = g;
-                            std::string g_name = game_to_edit.game_name;
-                            g_name.copy(game_name, sizeof(game_name) - 1);
-                            game_name[sizeof(game_name) - 1] = '\0';
-                        }*/
-                        imgui_util::reset_styling();
+                            ::g = g;
+                            strcpy(game_name, game_to_edit.game_name.c_str());
 
+                        }
 
-
+                        ImGui::PopStyleVar();
                         ImGui::EndListBox();
                     }
 
                     imgui_util::reset_color();
+
                 }
                 imgui_util::reset_styling();
                 ImGui::PopFont();
@@ -275,37 +289,17 @@ void render_loop(GLFWwindow* window)
 
         if (edit_game_menu)
         {
-            std::string placeholder = game_to_edit.game_name;
-            std::string playtime_placeholder = std::to_string(game_to_edit.time_played);
-            std::string score_placeholder = std::to_string(game_to_edit.score);
-
-
-            strcpy(game_name, placeholder.c_str());
             imgui_util::change_frame_background_color(0.25f, 0.25f, 0.25f, 0.5f);
             imgui_util::change_button_color(0.25f, 0.25f, 0.25f, 0.5f);
 
             imgui_util::change_item_width(200);
             ImGui::Text("Game: ");
             ImGui::SameLine();
-            ImGui::SameLine();
-            if (ImGui::InputText("##GAME_NAME_EDIT", &game_name[0], IM_ARRAYSIZE(game_name)))
-            {
-                if (ImGui::IsItemClicked() && game_name == placeholder)
-                {
-                    strcpy(game_name, "");
-                }
-                else if (ImGui::IsItemDeactivated() && game_name == "")
-                {
-                    strcpy(game_name, placeholder.c_str());
-                }
-            }
+            ImGui::InputText("##GAME_NAME_EDIT", game_name, IM_ARRAYSIZE(game_name));
 
             ImGui::Text("Playtime: ");
             ImGui::SameLine();
-            if(ImGui::InputFloat("##TIME_PLAYED_EDIT", &g.time_played))
-            {
-
-            }
+            ImGui::InputFloat("##TIME_PLAYED_EDIT", &g.time_played);
 
             ImGui::Text("Score: ");
             ImGui::SameLine();
@@ -321,10 +315,14 @@ void render_loop(GLFWwindow* window)
 
             if (imgui_util::rounded_button("Edit Game", ImVec2(200, 50), 5))
             {
-                g.game_name = game_name;
-                game::add_game(g);
-                add_game_menu = false;
+                game::edit_game(game::search_game_index(game_to_edit.game_name), g);
+                edit_game_menu = false;
                 is_main_menu = true;
+
+                //reset input
+                strcpy(game_name, "");
+                g = {};
+                game::save(path);
             }
             imgui_util::reset_color();
 
@@ -332,7 +330,7 @@ void render_loop(GLFWwindow* window)
             if (imgui_util::back_button("Back", ImVec2(200, 50), 5))
             {
                 edit_game_menu = false;
-                is_main_menu = true;
+                show_games_menu = true;
             }
         }
 

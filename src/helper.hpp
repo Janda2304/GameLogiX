@@ -46,6 +46,16 @@ struct helper
         tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
 #endif
     }
+
+    static std::string to_lowercase(const std::string& str)
+    {
+        std::string result;
+        for (char c : str)
+        {
+            result += std::tolower(c);
+        }
+        return result;
+    }
 };
 
 

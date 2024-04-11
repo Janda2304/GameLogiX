@@ -91,9 +91,9 @@ void imgui_util::reset_item_spacing()
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
 }
 
-void imgui_util::reset_styling()
+void imgui_util::reset_styling(int count)
 {
-    ImGui::PopStyleVar();
+    ImGui::PopStyleVar(count);
 }
 
 bool imgui_util::back_button(const char *label, ImVec2 size, float rounding = 5)
@@ -146,15 +146,24 @@ void imgui_util::change_slider_grab_active_color(const float r, const float g, c
     ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, ImVec4(r, g, b, a));
 }
 
-void imgui_util::reset_color()
+void imgui_util::reset_color(const int count)
 {
-    ImGui::PopStyleColor();
+    ImGui::PopStyleColor(count);
 }
 
 void imgui_util::change_item_width(const float width)
 {
     ImGui::PushItemWidth(width);
 }
+
+bool imgui_util::begin_rounded_list_box(const char *label, ImVec2 size, float rounding)
+{
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, rounding);
+    bool result = ImGui::BeginListBox(label, size);
+    ImGui::PopStyleVar();
+    return result;
+}
+
 
 
 
