@@ -1,17 +1,21 @@
-#include <GLFW/glfw3.h>
-
+#include <glfw3.h>
 #include <iostream>
 #include <nlohmann/json.hpp>
 
 #include "src/game.h"
 #include "src/helper.hpp"
 #include <imgui.h>
-#include <thread>
 
-#include "imgui/imgui_impl_glfw.h"
-#include "imgui/imgui_impl_opengl3.h"
-#include "imgui/imgui_util.h"
+#include <thread>
+#include <chrono>
+#include <algorithm>
+
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+#include <imgui_util.h>
 #include "src/color.hpp"
+#include <cmath>
+
 
 
 ImVec2 main_menu_button_size = ImVec2(400, 50);
@@ -19,7 +23,7 @@ float x_offset;
 float y_offset;
 
 bool is_main_menu = true;
-bool add_game_menu, show_games_menu, edit_game_menu = false;
+bool add_game_menu, show_games_menu, edit_game_menu, additional_game_info_menu, settings_menu = false;
 
 color gray7 = {0.071f, 0.071f, 0.071f, 1};
 color gray20 = {0.2f, 0.2f, 0.2f, 0.5f};
@@ -34,7 +38,7 @@ ImFont* regular_font;
 ImFont* large_font;
 
 
-std::string exe_path = helper::get_exe_path();
+std::string exe_path = helper::get_full_path();
 std::string path = exe_path.substr(0, exe_path.find_last_of('/')) + "/data/games.json";
 
 void imgui_init(GLFWwindow* window)
@@ -47,7 +51,7 @@ void imgui_init(GLFWwindow* window)
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 130");
     regular_font = io.Fonts->AddFontFromFileTTF("../fonts/Roboto-Regular.ttf", 18.0f);
-    large_font = io.Fonts->AddFontFromFileTTF("../fonts/Roboto-Regular.ttf", 24.0f);
+    large_font = io.Fonts->AddFontFromFileTTF("../fonts/Roboto-Regular.ttf", 22.0f);
 
     ImGui::StyleColorsDark();
 }
@@ -119,23 +123,30 @@ void render_loop(GLFWwindow* window)
 
             ImGui::SetCursorPos(button_pos);
             imgui_util::change_frame_background_color(color::transparent());
-            ImGui::BeginListBox("##MAIN_MENU", ImVec2(main_menu_button_size.x + 5, main_menu_button_size.y * 3 + 15));
+            ImGui::BeginListBox("##MAIN_MENU", ImVec2(main_menu_button_size.x + 5, main_menu_button_size.y * 4 + 20));
 
             imgui_util::reset_color();
             imgui_util::change_button_color(0, 0, 0, 0.5f);
             imgui_util::change_button_hover_color(gray20);
             imgui_util::change_button_clicked_color(clicked_color);
+            ImGui::PushFont(large_font);
 
-            if (imgui_util::rounded_button("Add Game", main_menu_button_size, 5))
+            if (imgui_util::default_rounded_button("Add Game", main_menu_button_size, 5))
             {
                 is_main_menu = false;
                 add_game_menu = true;
             }
 
-            if ( imgui_util::rounded_button("Show Games", main_menu_button_size, 5))
+            if (imgui_util::default_rounded_button("Show Games", main_menu_button_size, 5))
             {
                 is_main_menu = false;
                 show_games_menu = true;
+            }
+
+            if (imgui_util::default_rounded_button("Settings", main_menu_button_size, 5))
+            {
+                is_main_menu = false;
+                settings_menu = true;
             }
             imgui_util::reset_color(3);
 
@@ -143,17 +154,37 @@ void render_loop(GLFWwindow* window)
             imgui_util::change_button_hover_color(color::persian_red(0.3f));
             imgui_util::change_button_clicked_color(color::persian_red(0.8f));
 
-            if (imgui_util::rounded_button("Exit", main_menu_button_size, 5))
+            if (imgui_util::default_rounded_button("Exit", main_menu_button_size, 5))
             {
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 shutdown(window);
             }
 
             imgui_util::reset_color(3);
-
+            ImGui::PopFont();
             ImGui::EndListBox();
 
 
+
+        }
+
+        if (settings_menu)
+        {
+            if (imgui_util::rounded_default_color_button("Import Data", ImVec2(200, 50), 5))
+            {
+
+            }
+
+            if (imgui_util::rounded_default_color_button("Export Data", ImVec2(200, 50), 5))
+            {
+
+            }
+
+            if (imgui_util::back_button("Back", ImVec2(200, 50), 5))
+            {
+              settings_menu = false;
+              is_main_menu = true;
+            }
         }
 
         if (add_game_menu)
@@ -182,7 +213,7 @@ void render_loop(GLFWwindow* window)
 
             imgui_util::dummy(0, 25);
 
-            if (imgui_util::rounded_button("Add Game To List", ImVec2(200, 50), 5))
+            if (imgui_util::default_rounded_button("Add Game To List", ImVec2(200, 50), 5))
             {
                 g.game_name = game_name;
                 game::add_game(g);
@@ -234,25 +265,33 @@ void render_loop(GLFWwindow* window)
                 {
                     std::string g_name_haystack = helper::to_lowercase(g.game_name);
                     std::string g_name_needle = helper::to_lowercase(game_filter);
-                    std::cout << g_name_haystack << "needle:" << g_name_needle << std::endl;
                     if (strstr(g_name_haystack.c_str(), g_name_needle.c_str()) == nullptr && strlen(game_filter) > 0)
                     {
                         continue;
                     }
                     std::string label = g.game_name + "##GAME_ENTRY";
                     imgui_util::change_frame_background_color(0.25f, 0.25f, 0.25f, 0.5f);
-                    if(imgui_util::begin_rounded_list_box(label.c_str(), ImVec2(screen_size.x - 20, 130), 5.0f))
+                    if(imgui_util::begin_rounded_list_box(label.c_str(), ImVec2(screen_size.x - 20, 140), 5.0f))
                     {
                         float window_width = ImGui::GetWindowSize().x;
                         float button_width = 200.0f;
                         float padding = 10.0f;
-                        float button_pos_x = window_width - button_width - padding;
+                        float button_pos_x = window_width - button_width - padding - 10;
 
                         imgui_util::change_text_color(0.023529411764705882f, 0.33725490196078434f, 0.7254901960784313f, 1);
+                        ImGui::Dummy(ImVec2(0, 2));
                         ImGui::Text(g.game_name.c_str());
                         imgui_util::reset_color();
                         imgui_util::change_item_spacing_y(2);
                         ImGui::Text("Time Played: %.2f hours", g.time_played);
+                        ImGui::SameLine(button_pos_x);
+                        imgui_util::change_button_color(color::green());
+                        if (imgui_util::confirm_button("Additional Info", ImVec2(button_width, 30), 5))
+                        {
+                            /*game::remove_game(g.game_name);
+                            game::save(path);*/
+                        }
+                        imgui_util::reset_color();
                         ImGui::Text("Score: %d/10", g.score);
                         ImGui::SameLine(button_pos_x);
                         if (imgui_util::back_button("Remove Game", ImVec2(button_width, 30), 5))
@@ -262,7 +301,7 @@ void render_loop(GLFWwindow* window)
                         }
                         ImGui::Text(g.completed ? "Completed" : "Not Completed");
                         ImGui::SameLine(button_pos_x);
-                        if (imgui_util::rounded_button("Edit Game", ImVec2(button_width, 30), 5))
+                        if (imgui_util::rounded_default_color_button("Edit Game", ImVec2(button_width, 30), 5))
                         {
                             edit_game_menu = true;
                             show_games_menu = false;
@@ -313,7 +352,7 @@ void render_loop(GLFWwindow* window)
 
             imgui_util::dummy(0, 25);
 
-            if (imgui_util::rounded_button("Edit Game", ImVec2(200, 50), 5))
+            if (imgui_util::default_rounded_button("Edit Game", ImVec2(200, 50), 5))
             {
                 game::edit_game(game::search_game_index(game_to_edit.game_name), g);
                 edit_game_menu = false;
@@ -350,7 +389,7 @@ void render_loop(GLFWwindow* window)
 
 int main()
 {
-    std::string exe_path = helper::get_exe_path();
+    std::string exe_path = helper::get_full_path();
     std::string path = exe_path.substr(0, exe_path.find_last_of('/')) + "/data/games.json";
     game::load(path);
 

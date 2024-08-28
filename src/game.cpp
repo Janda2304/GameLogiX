@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <nlohmann/json.hpp>
+#include <vector>
 
 #include "helper.hpp"
 
@@ -31,7 +32,7 @@ game game::deserialize(const nlohmann::json &json_data)
 void game::add_game(const game &g)
 {
     games.push_back(g);
-    std::string exe_path = helper::get_exe_path();
+    std::string exe_path = helper::get_full_path();
     std::string path = exe_path.substr(0, exe_path.find_last_of('/')) + "/data/games.json";
     save(path);
 }

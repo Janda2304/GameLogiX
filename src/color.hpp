@@ -41,6 +41,26 @@ struct color
         return {1.0f, 1.0f, 1.0f, a};
     }
 
+    static color blue()
+    {
+        return {0.0f, 0.0f, 0.75f, 1.0f};
+    }
+
+    static color blue(float a)
+    {
+        return {0.0f, 0.0f, 0.75f, a};
+    }
+
+    static color tufts_blue()
+    {
+        return {0.235f, 0.568f, 0.901f, 1.0f};
+    }
+
+    static color tufts_blue(float a)
+    {
+        return {0.235f, 0.568f, 0.901f, a};
+    }
+
     
     /**
      * 
